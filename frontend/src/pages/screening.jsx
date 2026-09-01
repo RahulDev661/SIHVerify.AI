@@ -6,26 +6,88 @@ function Screening() {
   const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
-  const [documentType, setDocumentType] = useState("Passport");
+  const [documentType] = useState("Passport");
   const [loading, setLoading] = useState(false);
 
   const handleFile = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
   };
 
-  const startAnalysis = () => {
+  const startAnalysis = async () => {
 
     if (!file) {
       alert("Please upload a document first.");
       return;
     }
 
+    // Passport-only system
+    if (documentType !== "Passport") {
+      alert("This system currently supports passport verification only.");
+      return;
+    }
+
+    // Maximum 10 MB
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB.");
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("document_type", documentType);
+
+    try {
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/verify",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || "Verification failed"
+        );
+      }
+
+      console.log("FastAPI Response:", data);
+
+      // Store result temporarily
+      localStorage.setItem(
+        "verificationResult",
+        JSON.stringify(data)
+      );
+
       navigate("/result");
-    }, 2500);
+
+    } catch (error) {
+
+      console.error(
+        "Verification Error:",
+        error
+      );
+
+      alert(
+        error.message ||
+        "Unable to connect to the FastAPI server."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
   };
 
   return (
@@ -47,6 +109,7 @@ function Screening() {
 
       </header>
 
+
       <div className="screening-container">
 
         <section className="upload-card">
@@ -56,19 +119,20 @@ function Screening() {
           </div>
 
           <h2>
-            Upload Identity Document
+            Upload Passport
           </h2>
 
           <p>
-            Upload a clear image or PDF of the document
-            you want to screen.
+            Upload a clear image of the passport
+            you want to verify.
           </p>
+
 
           <label className="upload-area">
 
             <input
               type="file"
-              accept="image/*,.pdf"
+              accept="image/png,image/jpeg,image/jpg"
               onChange={handleFile}
             />
 
@@ -79,14 +143,15 @@ function Screening() {
             <strong>
               {file
                 ? file.name
-                : "Drop your document here"}
+                : "Drop your passport here"}
             </strong>
 
             <small>
-              PNG, JPG or PDF • Maximum 10MB
+              PNG or JPG • Maximum 10MB
             </small>
 
           </label>
+
 
           <div className="document-options">
 
@@ -94,20 +159,12 @@ function Screening() {
               Document Type
             </label>
 
-            <select
-              value={documentType}
-              onChange={(e) =>
-                setDocumentType(e.target.value)
-              }
-            >
-              <option>Passport</option>
-              <option>Visa</option>
-              <option>National ID</option>
-              <option>Driving License</option>
-              <option>Permit</option>
-            </select>
+            <strong>
+              Passport
+            </strong>
 
           </div>
+
 
           <button
             className="primary-btn analyze-btn"
@@ -121,6 +178,7 @@ function Screening() {
 
         </section>
 
+
         <section className="pipeline-card">
 
           <h2>AI Screening Pipeline</h2>
@@ -130,31 +188,41 @@ function Screening() {
             <div>
               <b>01</b>
               <strong>OCR Extraction</strong>
-              <span>Extract identity information</span>
+              <span>
+                Extract passport information
+              </span>
             </div>
 
             <div>
               <b>02</b>
               <strong>Document Validation</strong>
-              <span>Check document consistency</span>
+              <span>
+                Check passport consistency
+              </span>
             </div>
 
             <div>
               <b>03</b>
               <strong>Tampering Detection</strong>
-              <span>Detect manipulation signals</span>
+              <span>
+                Detect document manipulation
+              </span>
             </div>
 
             <div>
               <b>04</b>
               <strong>Face Verification</strong>
-              <span>Compare identity faces</span>
+              <span>
+                Analyse passport photograph
+              </span>
             </div>
 
             <div>
               <b>05</b>
               <strong>Risk Assessment</strong>
-              <span>Generate final risk score</span>
+              <span>
+                Generate final verification result
+              </span>
             </div>
 
           </div>
