@@ -1,0 +1,30 @@
+# --- API layer ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+pydantic==2.9.2
+pydantic[email]==2.9.2
+
+# --- auth / database ---
+motor==3.6.0
+passlib==1.7.4
+# NOTE: pinned <4.1 — passlib 1.7.4 reads bcrypt.__about__.__version__,
+# which newer bcrypt releases removed, causing "module 'bcrypt' has no
+# attribute '__about__'" on the first hash/verify call.
+bcrypt==4.0.1
+python-jose[cryptography]==3.3.0
+python-dotenv==1.0.1
+
+# --- ai_service (OCR / MRZ / face / tampering) ---
+# NOTE: use opencv-contrib-python ONLY (not opencv-python too) — it
+# already bundles core cv2 and installing both causes import
+# conflicts. contrib is required for cv2.FaceRecognizerSF_create.
+opencv-contrib-python==4.10.0.84
+pytesseract==0.3.13
+mediapipe==0.10.14
+numpy==1.26.4
+Pillow==10.4.0   # EXIF metadata parsing for tampering.metadata
+
+# --- testing ---
+pytest==8.3.3
+httpx==0.27.2
